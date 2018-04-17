@@ -15,10 +15,14 @@ class GooglePlaces
   # get place info by text search 
   def get_place_info(keyword)
     uri = URI(@endpoint_textsearch)
+    res = nil
     uri.query = URI.encode_www_form({
-                                      query: 'keyword',
-                                      key: '@places_apikey'
+                                      language: "ja",
+                                      query: keyword,
+                                      key: @places_apikey
                                     })
+    p uri.query
+    p uri
     Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       res = http.get(uri)
@@ -28,10 +32,10 @@ class GooglePlaces
   end
 
   def get_place_id(place_info)
-    if place_info['status'] != "OK"
+    if place_info["status"] != "OK"
       return nil
     end
-    place_id = place_info['result']['place_id']
+    place_id = place_info["results"][0]["place_id"]
 
     return place_id
   end
@@ -39,11 +43,13 @@ class GooglePlaces
   # get place detail by place id given by text search
   def get_place_detail(place_id)
     uri = URI(@endpoint_details)
+    res = nil
     uri.query = URI.encode_www_form({
-                                      place_id: 'place_id',
-                                      key: '@places_apikey'
+                                      language: "ja",
+                                      place_id: place_id,
+                                      key: @places_apikey
                                     })
-
+    p uri
     Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       res = http.get(uri)
@@ -52,14 +58,14 @@ class GooglePlaces
     return res
   end
 
-  def parse_json(place_detail)
-    if place_detail['status'] != "OK"
+  def extract_data_from_json(place_detail)
+    if place_detail["status"] != "OK"
       return nil
     end
 
-    name = place_detail['result']['name']
-    rating = place_detail['result']['rating']
-    website = place_detail['result']['website']
+    name = place_detail["result"]["name"]
+    rating = place_detail["result"]["rating"]
+    website = place_detail["result"]["website"]
     detail_info = {
       "name" => name,
       "rating" => rating,
@@ -83,16 +89,26 @@ class Response < SlackBot
     return {text: "#{user_name} #{msg}"}.merge(options).to_json
   end
 
+  # show detail info about certain place
   def show_place_detail(params, options = {})
     googleplaces = GooglePlaces.new
 
-    query_str = params[:text].slice!(/@TakaBot/)
+    query_str = params[:text]
+    query_str.slice!("@TakaBot ")
     res = googleplaces.get_place_info(query_str)
-    res = googleplaces.get_place_id(res)
+    place_info = JSON.load(res.body)
+    
+    res = googleplaces.get_place_id(place_info)
+    p place_info["results"][0]["place_id"]
+    
     res = googleplaces.get_place_detail(res)
-    result = parse_json(res)
+    place_detail = JSON.load(res.body)
+    res = googleplaces.extract_data_from_json(place_detail)
 
-    return result
+    user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
+    res_text = "#{user_name} #{res["name"]}: #{res["rating"]}, #{res["website"]}"
+    
+    return {text: res_text}.merge(options).to_json
   end
 end
 
@@ -100,9 +116,9 @@ class MySlackBot < SlackBot
   def respond_msg(params, options = {})
     response = Response.new
     if params[:text].include?("と言って") then
-      repeat_word(params, options)
+      response.repeat_word(params, options)
     else
-      show_place_detail(params, options)
+      response.show_place_detail(params, options)
     end
   end
 end
