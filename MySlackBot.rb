@@ -112,7 +112,7 @@ class Response < SlackBot
     res = googleplaces.extract_data_from_json(place_detail)
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} 【 *#{res["name"]}* 】: \n*価格帯*:moneybag:: #{res["price_level"]}, *評価*:star:: #{res["rating"]}/5, *Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*:information_desk_person:: #{res["review"]}"
+    res_text = "#{user_name} 【 *#{res["name"]}* 】 \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*:information_desk_person:: #{res["review"]}"
     
     return {text: res_text}.merge(options).to_json
   end
@@ -140,5 +140,5 @@ end
 post '/slack' do
   content_type :json
   
-  slackbot.respond_msg(params, {username: "TakaBot", link_names: true})
+  slackbot.respond_msg(params, {username: "takahashi_bot", link_names: true})
 end
