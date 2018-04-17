@@ -140,5 +140,5 @@ end
 post '/slack' do
   content_type :json
   
-  slackbot.respond_msg(params, {username: "takahashi_bot", link_names: true})
+  slackbot.respond_msg(params, {username: "TakaBot", link_names: true})
 end
