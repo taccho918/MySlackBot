@@ -112,9 +112,7 @@ class Response < SlackBot
     res = googleplaces.extract_data_from_json(place_detail)
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} #{res["name"]}: \n
-                Price level: #{res["price_level"]}, Rating: #{res["rating"]}, Web: #{res["website"]} \n
-                Latest review: #{res["review"]}"
+    res_text = "#{user_name} #{res["name"]}: \nPrice level: #{res["price_level"]}, Rating: #{res["rating"]}/5, Web: #{res["website"]} \nLatest review: #{res["review"]} :pizza:"
     
     return {text: res_text}.merge(options).to_json
   end
