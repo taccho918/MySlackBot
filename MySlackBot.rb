@@ -65,10 +65,13 @@ class GooglePlaces
 
     name = place_detail["result"]["name"]
     price_level = place_detail["result"]["price_level"]
+    if price_level.nil?
+      price_level = "なし"
+    end
     rating = place_detail["result"]["rating"]
     review = place_detail["result"]["reviews"][0]["text"]
     website = place_detail["result"]["website"]
-   # photo = place_detail["result"]["photos"][0]
+    #photo = place_detail["result"]["photos"][0]
     
     detail_info = {
       "name" => name,
