@@ -64,11 +64,17 @@ class GooglePlaces
     end
 
     name = place_detail["result"]["name"]
+    price_level = place_detail["result"]["price_level"]
     rating = place_detail["result"]["rating"]
+    review = place_detail["result"]["reviews"][0]["text"]
     website = place_detail["result"]["website"]
+   # photo = place_detail["result"]["photos"][0]
+    
     detail_info = {
       "name" => name,
+      "price_level" => price_level,
       "rating" => rating,
+      "review" => review,
       "website" => website
     }
 
@@ -106,7 +112,9 @@ class Response < SlackBot
     res = googleplaces.extract_data_from_json(place_detail)
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} #{res["name"]}: #{res["rating"]}, #{res["website"]}"
+    res_text = "#{user_name} #{res["name"]}: \n
+                Price level: #{res["price_level"]}, Rating: #{res["rating"]}, Web: #{res["website"]} \n
+                Latest review: #{res["review"]}"
     
     return {text: res_text}.merge(options).to_json
   end
