@@ -7,7 +7,7 @@ require 'SlackBot'
 class GooglePlaces
    def initialize(settings_file_path = "settings.yml")
     config = YAML.load_file(settings_file_path) if File.exist?(settings_file_path)
-    @places_apikey = config["google_places_api"]
+    @places_apikey = ENV['GOOGLE_PLACES_APIKEY'] || config["google_places_api"]
     @endpoint_textsearch = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
     @endpoint_details = "https://maps.googleapis.com/maps/api/place/details/json?"
   end
@@ -112,9 +112,7 @@ class Response < SlackBot
     res = googleplaces.extract_data_from_json(place_detail)
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} #{res["name"]}: \n
-                Price level: #{res["price_level"]}, Rating: #{res["rating"]}, Web: #{res["website"]} \n
-                Latest review: #{res["review"]}"
+    res_text = "#{user_name} 【 *#{res["name"]}* 】 \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*:information_desk_person:: #{res["review"]}"
     
     return {text: res_text}.merge(options).to_json
   end
@@ -142,5 +140,5 @@ end
 post '/slack' do
   content_type :json
   
-  slackbot.respond_msg(params, {username: "TakaBot", link_names: true})
+  slackbot.respond_msg(params, {username: "takahashi_bot", link_names: true})
 end
