@@ -7,7 +7,7 @@ require 'SlackBot'
 class GooglePlaces
    def initialize(settings_file_path = "settings.yml")
     config = YAML.load_file(settings_file_path) if File.exist?(settings_file_path)
-    @places_apikey = config["google_places_api"]
+    @places_apikey = ENV['GOOGLE_PLACES_APIKEY'] || config["google_places_api"]
     @endpoint_textsearch = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
     @endpoint_details = "https://maps.googleapis.com/maps/api/place/details/json?"
   end
