@@ -64,8 +64,19 @@ class GooglePlaces
     end
 
     name = place_detail["result"]["name"]
+    open_status = place_detail["result"]["opening_hours"]["open_now"]
+    if open_status.nil? == false
+      if open_status == true
+        open_status = "営業中"
+      else
+        open_status = "休業"
+      end
+    else
+      open_status = "なし"
+    end
+      
     price_level = place_detail["result"]["price_level"]
-    if price_level.nil?
+    if price_level.nil? then
       price_level = "なし"
     end
     rating = place_detail["result"]["rating"]
@@ -75,10 +86,12 @@ class GooglePlaces
     
     detail_info = {
       "name" => name,
+      "open_status" => open_status,
       "price_level" => price_level,
       "rating" => rating,
       "review" => review,
-      "website" => website
+      "website" => website,
+      #"photo" => photo
     }
 
     return detail_info
@@ -108,14 +121,13 @@ class Response < SlackBot
     place_info = JSON.load(res.body)
     
     res = googleplaces.get_place_id(place_info)
-    p place_info["results"][0]["place_id"]
-    
     res = googleplaces.get_place_detail(res)
     place_detail = JSON.load(res.body)
+    p place_detail
     res = googleplaces.extract_data_from_json(place_detail)
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} 【 *#{res["name"]}* 】 \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*:information_desk_person:: #{res["review"]}"
+    res_text = "#{user_name} \n【 *#{res["name"]}* 】 `#{res["open_status"]}` \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*:information_desk_person:: #{res["review"]}"
     
     return {text: res_text}.merge(options).to_json
   end
