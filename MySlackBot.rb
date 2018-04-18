@@ -77,6 +77,7 @@ class GooglePlaces
                                       maxwidth: 400
                                     })
     p uri
+    p uri.query
     Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       res = http.get(uri)
@@ -118,6 +119,12 @@ class GooglePlaces
 
     return detail_info
   end
+
+  def extract_photo_url(html)
+    a_tag = html.match(/<A HREF="(.*?)">/)
+    photo_url = a_tag[1]
+    return photo_url
+  end
 end
 
 class Response < SlackBot
@@ -150,9 +157,11 @@ class Response < SlackBot
     p place_detail
     res = googleplaces.extract_data_from_json(place_detail)
     photo = googleplaces.get_place_photo(photo_ref)
+    photo = photo.body # html
+    photo = googleplaces.extract_photo_url(photo)
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} \n【 *#{res["name"]}* 】 #{res["open_status"]} \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*: \n:information_desk_person: #{res["latest_review"]} \n#{photo.body}"
+    res_text = "#{user_name} \n【 *#{res["name"]}* 】 #{res["open_status"]} \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*::information_desk_person: \n#{res["latest_review"]} \n#{photo}"
     
     return {text: res_text}.merge(options).to_json
   end
