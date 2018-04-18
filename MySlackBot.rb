@@ -74,13 +74,14 @@ class GooglePlaces
     uri.query = URI.encode_www_form({
                                       key: @places_apikey,
                                       photoreference: photo_ref,
-                                      maxwidth: 100
+                                      maxwidth: 400
                                     })
+    p uri
     Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       res = http.get(uri)
     end
-    
+   
     return res
   end
 
@@ -148,10 +149,10 @@ class Response < SlackBot
 
     p place_detail
     res = googleplaces.extract_data_from_json(place_detail)
-    photo = googleplaces.get_place_photo(photo_ref) 
+    photo = googleplaces.get_place_photo(photo_ref)
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} \n【 *#{res["name"]}* 】 #{res["open_status"]} \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*: \n:information_desk_person: #{res["latest_review"]} \n#{photo}"
+    res_text = "#{user_name} \n【 *#{res["name"]}* 】 #{res["open_status"]} \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*: \n:information_desk_person: #{res["latest_review"]} \n#{photo.body}"
     
     return {text: res_text}.merge(options).to_json
   end
