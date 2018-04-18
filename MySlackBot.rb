@@ -64,20 +64,17 @@ class GooglePlaces
     end
 
     name = place_detail["result"]["name"]
-    open_status = place_detail["result"]["opening_hours"]["open_now"]
-    if open_status.nil? == false
+    unless place_detail["result"]["opening_hours"].nil?
+      open_status = place_detail["result"]["opening_hours"]["open_now"]
       if open_status == true
         open_status = "営業中"
       else
         open_status = "休業"
       end
-    else
-      open_status = "なし"
     end
-      
-    price_level = place_detail["result"]["price_level"]
-    if price_level.nil? then
-      price_level = "なし"
+    
+    unless place_detail["result"]["price_level"].nil?
+      price_level = place_detail["result"]["price_level"]
     end
     rating = place_detail["result"]["rating"]
     review = place_detail["result"]["reviews"][0]["text"]
@@ -127,7 +124,7 @@ class Response < SlackBot
     res = googleplaces.extract_data_from_json(place_detail)
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} \n【 *#{res["name"]}* 】 `#{res["open_status"]}` \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*:information_desk_person:: #{res["review"]}"
+    res_text = "#{user_name} \n【 *#{res["name"]}* 】 `#{res["open_status"]}` \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*: \ninformation_desk_person:: #{res["review"]}"
     
     return {text: res_text}.merge(options).to_json
   end
