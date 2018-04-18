@@ -10,6 +10,7 @@ class GooglePlaces
     @places_apikey = ENV['GOOGLE_PLACES_APIKEY'] || config["google_places_api"]
     @endpoint_textsearch = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
     @endpoint_details = "https://maps.googleapis.com/maps/api/place/details/json?"
+    @endpoint_photo = "https://maps.googleapis.com/maps/api/place/photo?"
   end
 
   # get place info by text search 
@@ -39,6 +40,15 @@ class GooglePlaces
 
     return place_id
   end
+
+  def get_photo_ref(place_info)
+    if place_info["status"] != "OK"
+      return nil
+    end
+    photo_ref = place_info["results"][0]["photos"][0]["photo_reference"]
+
+    return photo_ref
+  end
   
   # get place detail by place id given by text search
   def get_place_detail(place_id)
@@ -58,6 +68,22 @@ class GooglePlaces
     return res
   end
 
+  def get_place_photo(photo_ref)
+    uri = URI(@endpoint_photo)
+    res = nil
+    uri.query = URI.encode_www_form({
+                                      key: @places_apikey,
+                                      photoreference: photo_ref,
+                                      maxwidth: 100
+                                    })
+    Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      res = http.get(uri)
+    end
+    
+    return res
+  end
+
   def extract_data_from_json(place_detail)
     if place_detail["status"] != "OK"
       return nil
@@ -67,9 +93,9 @@ class GooglePlaces
     unless place_detail["result"]["opening_hours"].nil?
       open_status = place_detail["result"]["opening_hours"]["open_now"]
       if open_status == true
-        open_status = "営業中"
+        open_status = "`営業中`"
       else
-        open_status = "休業"
+        open_status = "`休業`"
       end
     end
     
@@ -79,16 +105,14 @@ class GooglePlaces
     rating = place_detail["result"]["rating"]
     review = place_detail["result"]["reviews"][0]["text"]
     website = place_detail["result"]["website"]
-    #photo = place_detail["result"]["photos"][0]
     
     detail_info = {
       "name" => name,
       "open_status" => open_status,
       "price_level" => price_level,
       "rating" => rating,
-      "review" => review,
+      "latest_review" => review,
       "website" => website,
-      #"photo" => photo
     }
 
     return detail_info
@@ -116,15 +140,18 @@ class Response < SlackBot
     query_str.slice!("@TakaBot ")
     res = googleplaces.get_place_info(query_str)
     place_info = JSON.load(res.body)
+    photo_ref = googleplaces.get_photo_ref(place_info)
     
     res = googleplaces.get_place_id(place_info)
     res = googleplaces.get_place_detail(res)
     place_detail = JSON.load(res.body)
+
     p place_detail
     res = googleplaces.extract_data_from_json(place_detail)
+    photo = googleplaces.get_place_photo(photo_ref) 
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} \n【 *#{res["name"]}* 】 `#{res["open_status"]}` \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*: \ninformation_desk_person:: #{res["review"]}"
+    res_text = "#{user_name} \n【 *#{res["name"]}* 】 #{res["open_status"]} \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*: \n:information_desk_person: #{res["latest_review"]} \n#{photo}"
     
     return {text: res_text}.merge(options).to_json
   end
