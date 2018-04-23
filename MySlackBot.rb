@@ -143,14 +143,15 @@ class Response < SlackBot
     googleplaces = GooglePlaces.new
 
     query_str = params[:text]
-    query_str.match(/「(.*)」の情報/)
+    query_str = query_str.match(/「(.*)」の情報/)
     query_str = query_str[1]
+    p query_str
     res = googleplaces.get_place_info(query_str)
     place_info = JSON.load(res.body)
+    p place_info
     if place_info["status"] != "OK"
       return {text: "結果が取得できませんでした"}.merge(options).to_json
     end
-    
     photo_ref = googleplaces.get_photo_ref(place_info)
     
     res = googleplaces.get_place_id(place_info)
