@@ -131,8 +131,6 @@ class Response < SlackBot
   # cool code goes here
   # "@Bot「○○」と言って" -> "@user_name ○○"
   def repeat_word(params, options = {})
-    return nil if params[:user_name] == "slackbot" || params[:user_id] == "USLACKBOT"
-
     msg = params[:text]
     msg = msg.match(/「(.*)」と言って/)
     msg = msg[1]
@@ -145,9 +143,14 @@ class Response < SlackBot
     googleplaces = GooglePlaces.new
 
     query_str = params[:text]
-    query_str.slice!("@TakaBot ")
+    query_str.match(/「(.*)」の情報/)
+    query_str = query_str[1]
     res = googleplaces.get_place_info(query_str)
     place_info = JSON.load(res.body)
+    if place_info["status"] != "OK"
+      return {text: "結果が取得できませんでした"}.merge(options).to_json
+    end
+    
     photo_ref = googleplaces.get_photo_ref(place_info)
     
     res = googleplaces.get_place_id(place_info)
@@ -170,10 +173,12 @@ end
 class MySlackBot < SlackBot
   def respond_msg(params, options = {})
     response = Response.new
-    if params[:text].include?("と言って") then
+    if params[:text].include?("と言って")
       response.repeat_word(params, options)
-    else
+    elsif params[:text].include?("の情報") 
       response.show_place_detail(params, options)
+    else
+      response.naive_respond(params, options)
     end
   end
 end
