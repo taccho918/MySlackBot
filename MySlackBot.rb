@@ -165,7 +165,7 @@ class Response < SlackBot
     photo = googleplaces.extract_photo_url(photo)
 
     user_name = params[:user_name] ? "@#{params[:user_name]}" : ""
-    res_text = "#{user_name} \n【 *#{res["name"]}* 】 #{res["open_status"]} \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*Webサイト*:computer:: #{res["website"]} \n*最新のレビュー*::information_desk_person: \n#{res["latest_review"]} \n#{photo}"
+    res_text = "#{user_name} \n【 *#{res["name"]}* 】 #{res["open_status"]} \n*価格帯*:moneybag:: #{res["price_level"]}　*評価*:star:: #{res["rating"]}/5　*URL*:computer:: #{res["website"]} \n*レビュー*:information_desk_person:: \n#{res["latest_review"]} \n#{photo}"
     
     return {text: res_text}.merge(options).to_json
   end
